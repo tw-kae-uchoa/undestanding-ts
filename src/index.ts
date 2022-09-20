@@ -10,19 +10,20 @@ interface Rendable {
 
 /* ###### INTERFACES #### */
 
-
 /* ###### CLASSES #### */
 
 class ProjectInput implements Rendable {
-  readonly TEMPLATE_ID = 'project-input'
+  readonly TEMPLATE_ID = "project-input"
   templateElement: HTMLTemplateElement
-  
+
   constructor() {
-      this.templateElement = document.getElementById(this.TEMPLATE_ID)! as HTMLTemplateElement
+    this.templateElement = document.getElementById(
+      this.TEMPLATE_ID
+    )! as HTMLTemplateElement
   }
 
   render() {
-      return this.templateElement.content
+    return this.templateElement.content
   }
 }
 
@@ -37,6 +38,18 @@ class SingleProject implements Rendable {
   }
 
   render() {
+    return this.templateElement.content
+  }
+}
+
+class ProjectList implements Rendable {
+  readonly TEMPLATE_ID = "project-list"
+  templateElement: HTMLTemplateElement
+  constructor() {
+    this.templateElement = document.getElementById(this.TEMPLATE_ID)! as HTMLTemplateElement
+  }
+
+  render(){
     return this.templateElement.content
   }
 }
@@ -63,7 +76,7 @@ const app = new App()
 
 const projectInput = new ProjectInput()
 const singleProject = new SingleProject()
-app.render(projectInput, singleProject)
-
+const projectList = new ProjectList()
+app.render(projectInput, singleProject, projectList)
 
 /* ###### BODY #### */
