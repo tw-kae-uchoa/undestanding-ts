@@ -5,12 +5,19 @@
 /* ###### INTERFACES #### */
 
 interface Rendable {
-  render(): DocumentFragment | HTMLElement
+  render(): HTMLElement
 }
 
 /* ###### INTERFACES #### */
 
 /* ###### CLASSES #### */
+
+class TemplateParser {
+  static getHTMLElement(template: HTMLTemplateElement) {
+    const clone = document.importNode(template.content, true)
+    return clone.firstElementChild as HTMLElement
+  }
+}
 
 class ProjectInput implements Rendable {
   readonly TEMPLATE_ID = "project-input"
@@ -23,7 +30,7 @@ class ProjectInput implements Rendable {
   }
 
   render() {
-    return this.templateElement.content
+    return TemplateParser.getHTMLElement(this.templateElement)
   }
 }
 
@@ -38,19 +45,30 @@ class SingleProject implements Rendable {
   }
 
   render() {
-    return this.templateElement.content
+    return TemplateParser.getHTMLElement(this.templateElement)
   }
 }
 
 class ProjectList implements Rendable {
   readonly TEMPLATE_ID = "project-list"
   templateElement: HTMLTemplateElement
-  constructor() {
-    this.templateElement = document.getElementById(this.TEMPLATE_ID)! as HTMLTemplateElement
+  projects: SingleProject[]
+
+  constructor(...projects: SingleProject[]) {
+    this.templateElement = document.getElementById(
+      this.TEMPLATE_ID
+    )! as HTMLTemplateElement
+    this.projects = projects
   }
 
-  render(){
-    return this.templateElement.content
+  render() {
+    const node = TemplateParser.getHTMLElement(this.templateElement)
+    if (this.projects.length) {
+      for (const project of this.projects) {
+        node.appendChild(project.render())
+      }
+    }
+    return node
   }
 }
 
@@ -76,7 +94,8 @@ const app = new App()
 
 const projectInput = new ProjectInput()
 const singleProject = new SingleProject()
-const projectList = new ProjectList()
-app.render(projectInput, singleProject, projectList)
+const projectList = new ProjectList(singleProject)
+app.render(projectInput, projectList
+  )
 
 /* ###### BODY #### */
