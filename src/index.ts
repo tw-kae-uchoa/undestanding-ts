@@ -1,6 +1,19 @@
-// import App from "./App"
-// import { Rendable } from "./interfaces/Rendable"
-// import ProjectInput from "./ProjectInput"
+/* ###### DECORATORS #### */
+
+function bind(_: any, __: string, descriptor: PropertyDescriptor) {
+  const originalFn = descriptor.value
+  const decoratedDescriptor = {
+    configurable: true,
+    get() {
+      const bindFn = originalFn.bind(this)
+      return bindFn
+    },
+  }
+
+  return decoratedDescriptor
+}
+
+/* ###### DECORATORS #### */
 
 /* ###### INTERFACES #### */
 
@@ -20,17 +33,45 @@ class TemplateParser {
 }
 
 class ProjectInput implements Rendable {
-  readonly TEMPLATE_ID = "project-input"
-  templateElement: HTMLTemplateElement
+  readonly STYLE_ID = "user-input"
+  formElement: HTMLFormElement
+  titleInput: HTMLInputElement
+  descriptionInput: HTMLTextAreaElement
+  peopleInput: HTMLInputElement
 
   constructor() {
-    this.templateElement = document.getElementById(
-      this.TEMPLATE_ID
+    const templateElement = document.getElementById(
+      "project-input"
     )! as HTMLTemplateElement
+    this.formElement = TemplateParser.getHTMLElement(
+      templateElement
+    ) as HTMLFormElement
+    this.titleInput = this.formElement.querySelector(
+      "#title"
+    )! as HTMLInputElement
+    this.descriptionInput = this.formElement.querySelector(
+      "#description"
+    )! as HTMLTextAreaElement
+    this.peopleInput = this.formElement.querySelector(
+      "#people"
+    )! as HTMLInputElement
+
+    this.configureSubmitListener()
+  }
+
+  @bind
+  private onSubmitHandler(event: Event) {
+    event.preventDefault()
+    console.log(this.titleInput)
+  }
+
+  private configureSubmitListener() {
+    this.formElement.addEventListener("submit", this.onSubmitHandler)
   }
 
   render() {
-    return TemplateParser.getHTMLElement(this.templateElement)
+    this.formElement.id = this.STYLE_ID
+    return this.formElement
   }
 }
 
@@ -95,7 +136,6 @@ const app = new App()
 const projectInput = new ProjectInput()
 const singleProject = new SingleProject()
 const projectList = new ProjectList(singleProject)
-app.render(projectInput, projectList
-  )
+app.render(projectInput, projectList)
 
 /* ###### BODY #### */
