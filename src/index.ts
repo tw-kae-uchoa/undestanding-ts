@@ -21,14 +21,7 @@ interface Rendable {
   render(): HTMLElement
 }
 
-interface Validatable<T extends FormFields> {
-  field: T
-  validationFn: (this: Validatable<T>) => boolean
-}
-
 type FormFields = HTMLInputElement | HTMLTextAreaElement
-
-
 
 /* ###### INTERFACES #### */
 
@@ -41,16 +34,30 @@ class TemplateParser {
   }
 }
 
+class ValidatableField<T extends FormFields> {
+  field: T
+  validateFn: (field: T) => boolean
+
+  constructor(field: T, validateFn: (field: T) => boolean) {
+    this.field = field
+    this.validateFn = validateFn
+  }
+
+  isValid() {
+    return this.validateFn(this.field)
+  }
+}
+
 class Validation {
-  static required<T extends FormFields>(this: Validatable<T>) {
-    return this.field.value.length > 0
+  static required<T extends FormFields>(field: T) {
+    return field.value.length > 0
   }
 }
 
 class ProjectInput implements Rendable {
   readonly STYLE_ID = "user-input"
   formElement: HTMLFormElement
-  titleInput: Validatable<HTMLInputElement>
+  titleInput: ValidatableField<HTMLInputElement>
   descriptionInput: HTMLTextAreaElement
   peopleInput: HTMLInputElement
 
@@ -63,10 +70,7 @@ class ProjectInput implements Rendable {
     ) as HTMLFormElement
 
     const title = this.formElement.querySelector("#title")! as HTMLInputElement
-    this.titleInput = {
-      field: title,
-      validationFn: Validation.required,
-    }
+    this.titleInput = new ValidatableField(title, Validation.required)
 
     this.descriptionInput = this.formElement.querySelector(
       "#description"
@@ -81,7 +85,7 @@ class ProjectInput implements Rendable {
   @bind
   private onSubmitHandler(event: Event) {
     event.preventDefault()
-    if (!this.titleInput.validationFn()) alert("error")
+    if (!this.titleInput.isValid()) alert("error")
   }
 
   private configureSubmitListener() {
