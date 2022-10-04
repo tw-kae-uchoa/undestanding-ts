@@ -59,6 +59,10 @@ class Validation {
     }
     return field.value.length >= length
   }
+
+  static min<T extends HTMLInputElement>(field: T, min: number) {
+    return parseInt(field.value) >= min
+  }
 }
 
 class ProjectInput implements Rendable {
@@ -66,7 +70,7 @@ class ProjectInput implements Rendable {
   formElement: HTMLFormElement
   titleInput: ValidatableField<HTMLInputElement>
   descriptionInput: ValidatableField<HTMLTextAreaElement>
-  peopleInput: HTMLInputElement
+  peopleInput: ValidatableField<HTMLInputElement>
 
   constructor() {
     const templateElement = document.getElementById(
@@ -77,9 +81,8 @@ class ProjectInput implements Rendable {
     ) as HTMLFormElement
 
     const title = this.formElement.querySelector("#title")! as HTMLInputElement
-    this.titleInput = new ValidatableField(
-      title,
-      (field: HTMLInputElement) => Validation.required(field)
+    this.titleInput = new ValidatableField(title, (field: HTMLInputElement) =>
+      Validation.required(field)
     )
 
     const descriptionInput = this.formElement.querySelector(
@@ -90,10 +93,14 @@ class ProjectInput implements Rendable {
       descriptionInput,
       (field: HTMLTextAreaElement) => Validation.minLength(field, 5)
     )
-    this.peopleInput = this.formElement.querySelector(
+
+    const peopleInput = this.formElement.querySelector(
       "#people"
     )! as HTMLInputElement
-
+    this.peopleInput = new ValidatableField(
+      peopleInput,
+      (field: HTMLInputElement) => Validation.min(field, 2)
+    )
     this.configureSubmitListener()
   }
 
@@ -102,6 +109,7 @@ class ProjectInput implements Rendable {
     event.preventDefault()
     if (!this.titleInput.isValid()) alert("title input error")
     if (!this.descriptionInput.isValid()) alert("description input error")
+    if (!this.peopleInput.isValid()) alert("people input error")
   }
 
   private configureSubmitListener() {
