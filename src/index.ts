@@ -21,9 +21,9 @@ interface Rendable {
   render(): HTMLElement
 }
 
-type FormFields = HTMLInputElement | HTMLTextAreaElement
-
 /* ###### INTERFACES #### */
+
+type FormFields = HTMLInputElement | HTMLTextAreaElement
 
 /* ###### CLASSES #### */
 
@@ -34,7 +34,7 @@ class TemplateParser {
   }
 }
 
-class ValidatableField<T extends FormFields> {
+class ValidatableField<T> {
   field: T
   validateFn: (field: T) => boolean
 
@@ -52,13 +52,20 @@ class Validation {
   static required<T extends FormFields>(field: T) {
     return field.value.length > 0
   }
+
+  static minLength<T extends FormFields>(field: T, length: number) {
+    if (field instanceof HTMLTextAreaElement) {
+      return field.textLength >= length
+    }
+    return field.value.length >= length
+  }
 }
 
 class ProjectInput implements Rendable {
   readonly STYLE_ID = "user-input"
   formElement: HTMLFormElement
   titleInput: ValidatableField<HTMLInputElement>
-  descriptionInput: HTMLTextAreaElement
+  descriptionInput: ValidatableField<HTMLTextAreaElement>
   peopleInput: HTMLInputElement
 
   constructor() {
@@ -70,11 +77,19 @@ class ProjectInput implements Rendable {
     ) as HTMLFormElement
 
     const title = this.formElement.querySelector("#title")! as HTMLInputElement
-    this.titleInput = new ValidatableField(title, Validation.required)
+    this.titleInput = new ValidatableField(
+      title,
+      (field: HTMLInputElement) => Validation.required(field)
+    )
 
-    this.descriptionInput = this.formElement.querySelector(
+    const descriptionInput = this.formElement.querySelector(
       "#description"
     )! as HTMLTextAreaElement
+
+    this.descriptionInput = new ValidatableField(
+      descriptionInput,
+      (field: HTMLTextAreaElement) => Validation.minLength(field, 5)
+    )
     this.peopleInput = this.formElement.querySelector(
       "#people"
     )! as HTMLInputElement
@@ -85,7 +100,8 @@ class ProjectInput implements Rendable {
   @bind
   private onSubmitHandler(event: Event) {
     event.preventDefault()
-    if (!this.titleInput.isValid()) alert("error")
+    if (!this.titleInput.isValid()) alert("title input error")
+    if (!this.descriptionInput.isValid()) alert("description input error")
   }
 
   private configureSubmitListener() {
