@@ -1,14 +1,26 @@
 import { bind } from "../../decorators/bind.js"
 import { Rendable } from "../../interfaces/ui/index.js"
+import { Observable } from "../../interfaces/utils/_Observable.js"
 import { TemplateParser } from "../../shared/ui/index.js"
 import { ValidatableField, Validation } from "../../shared/validation/index.js"
 
-export default class ProjectInput implements Rendable {
+export default class ProjectInput implements Rendable, Observable {
   readonly STYLE_ID = "user-input"
-  formElement: HTMLFormElement
-  titleInput?: ValidatableField<HTMLInputElement>
-  descriptionInput?: ValidatableField<HTMLTextAreaElement>Í
-  peopleInput?: ValidatableField<HTMLInputElement>
+  private _formElement: HTMLFormElement
+  private _titleInput?: ValidatableField<HTMLInputElement>
+  private _descriptionInput?: ValidatableField<HTMLTextAreaElement>
+  private _peopleInput?: ValidatableField<HTMLInputElement>
+  private _subscribers: Function[]
+
+  constructor() {
+    this._formElement = this._getFormElement()
+    this._titleInput = this._getTitleInput()
+    this._descriptionInput = this._getDescriptionInput()
+    this._peopleInput = this._getPeopleInput()
+    this._subscribers = []
+
+    this.configureSubmitListener()
+  }
 
   private _getFormElement() {
     const templateElement = document.getElementById(
@@ -18,18 +30,18 @@ export default class ProjectInput implements Rendable {
   }
 
   private _getTitleInput() {
-    if (!this.formElement) return
+    if (!this._formElement) return
 
-    const title = this.formElement.querySelector("#title")! as HTMLInputElement
+    const title = this._formElement.querySelector("#title")! as HTMLInputElement
     return new ValidatableField(title, (field: HTMLInputElement) =>
       Validation.required(field)
     )
   }
 
   private _getDescriptionInput() {
-    if (!this.formElement) return
+    if (!this._formElement) return
 
-    const descriptionInput = this.formElement.querySelector(
+    const descriptionInput = this._formElement.querySelector(
       "#description"
     )! as HTMLTextAreaElement
 
@@ -40,8 +52,8 @@ export default class ProjectInput implements Rendable {
   }
 
   private _getPeopleInput() {
-    if (!this.formElement) return
-    const peopleInput = this.formElement.querySelector(
+    if (!this._formElement) return
+    const peopleInput = this._formElement.querySelector(
       "#people"
     )! as HTMLInputElement
     return new ValidatableField(peopleInput, (field: HTMLInputElement) =>
@@ -49,32 +61,53 @@ export default class ProjectInput implements Rendable {
     )
   }
 
-  constructor() {
-    this.formElement = this._getFormElement()
-    this.titleInput = this._getTitleInput()
-    this.descriptionInput = this._getDescriptionInput()
-    this.peopleInput = this._getPeopleInput()
+  private _isFormValid() {
+    let isValid = true
+    if (this._titleInput && !this?._titleInput.isValid()) isValid = false
+    if (this._descriptionInput && !this._descriptionInput.isValid())
+      isValid = false
+    if (this._peopleInput && !this._peopleInput.isValid()) isValid = false
 
-    this.configureSubmitListener()
+    return isValid
+  }
+
+  private _getFormData(form: HTMLFormElement) {
+    const formData = new FormData(form)    
+    if (this._isFormValid()) return formData
+
+    return null
   }
 
   @bind
   private onSubmitHandler(event: Event) {
     event.preventDefault()
-    if (this.titleInput && !this?.titleInput.isValid())
-      alert("title input error")
-    if (this.descriptionInput && !this.descriptionInput.isValid())
-      alert("description input error")
-    if (this.peopleInput && !this.peopleInput.isValid())
-      alert("people input error")
+    const form = event.currentTarget as HTMLFormElement
+    const formData = this._getFormData(form)
+    if (formData) {
+      this.notify(formData)
+    }
   }
 
   private configureSubmitListener() {
-    this.formElement.addEventListener("submit", this.onSubmitHandler)
+    this._formElement.addEventListener("submit", this.onSubmitHandler)
   }
 
   render() {
-    this.formElement.id = this.STYLE_ID
-    return this.formElement
+    this._formElement.id = this.STYLE_ID
+    return this._formElement
+  }
+
+  subscribe(fn: Function) {
+    this._subscribers.push(fn)
+  }
+
+  unSubscribe(fn: Function) {
+    this._subscribers.filter((item: Function) => fn !== item)
+  }
+
+  notify(formData: FormData) {
+    for (const sub of this._subscribers) {
+      sub(Array.from(formData))
+    }
   }
 }
