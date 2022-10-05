@@ -1,7 +1,7 @@
 import App from "./App/index.js"
-import ProjectInput from "./View/ProjectInput/index.js"
-import ProjectList from "./View/ProjectList/index.js"
-import SingleProject from "./View/SingleProject/index.js"
+import ProjectInput from "./views/ProjectInput/index.js"
+import ProjectList from "./views/ProjectList/index.js"
+import SingleProject from "./views/SingleProject/index.js"
 
 const app = new App()
 
